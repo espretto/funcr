@@ -17,10 +17,11 @@
 	objectHasOwnProperty = f.hasOwnProperty,
 
 	functionCall = Array.call,
-	functionBind = Array.bind,
 	functionApply = Array.apply,
+	functionBind = Array.bind, uncurriedBind,
 
 	arrayConcat = array.concat,
+
 	arrayOf = Array.of || function(){
 		var args = arguments,
 				i = args.length,
@@ -33,14 +34,14 @@
 	// ----
 	f.VERSION = '0.0.1';
 
-	f.o = function (/* fn, ..*/){
+	f.o = function (/* ...fns*/){
 		var fns = arrayOf.apply(_, arguments),
 				i = fns.length;
 
-		if (i < 2) throw new TypeError('reduce of empty array with no initial value');
+		if (!i) throw new TypeError('reduce of empty array with no initial value');
 
 		return i === 1 ? fns[0] : function (){
-			var args = fns[--i].apply(_, arguments);
+			var args = fns[--i].apply(this, arguments);
 			while (i--) args = fns[i].call(this, args);
 			return args;
 		};
@@ -52,7 +53,7 @@
 		};
 	};
 
-	f.curry = function (/* [fnlen,] fn, arg, ..*/){
+	f.curry = function (/* [fnlen,] fn, ...args*/){
 		var args = arrayOf.apply(_, arguments),
 				fnlen = args.shift(),
 				fn,
@@ -68,38 +69,59 @@
 		// fill up with don't-cares in case curried with less args than required.
 		for (alen = args.length; alen < fnlen;) alen = args.push(f);
 
-		return function (/* brg, ..*/){
-			// copy curried args, merge arguments into them and append remaining ones.
-			// recurry if `f` is still found, call fn otherwise.
+		return function (/* ...brgs*/){
+
+			// copy the given `args`
 			var brgs = args.slice(), blen = alen, b = 0,
 					crgs = arguments, clen = crgs.length, c = 0;
 
+			// merge this call's arguments into them
 			for (; c < clen && b < blen; b++) if (brgs[b] === f) brgs[b] = crgs[c++];
+
+			// append the remaining ones
 			for (; c < clen; c++) blen = brgs.push(crgs[c]);
+			
+			// if `f` is still among the resulting arguments
 			for (; blen-- && brgs[blen] !== f;);
+
+			// call `fn` with them
 			if (blen === -1) return fn.apply(this, brgs);
+
+			// or recurry `fn` otherwise
 			brgs.unshift(fn);
 			return f.curry.apply(_, brgs);
+
+			// ~1/3 slower functional equivalent of the above
+			// ```
+			// var brgs = Array.of.apply(_, arguments),
+			// 		crgs = args.map(function(arg){
+			// 			return arg === f && brgs.length ? brgs.shift() : arg;
+			// 		}).concat(brgs);
+
+			// if (!crgs.contains(f)) return fn.apply(this, crgs);
+			// else return crgs.unshift(fn), f.curry.apply(_, crgs);
+			// ```
 		};
 	};
 
-	f.chsig = function (/* fn, i, ..*/){
-		var indices = arrayOf.apply(_, arguments);
+	f.chsig = function (/* fn, ...indices*/){
+		var indices = arrayOf.apply(_, arguments),
+				fn = indices.shift();
 		return function (){
 			var i = indices.length,
 					args = new Array(i);
-			while (--i) args[i] = arguments[indices[i]]; // skip fn
-			return indices[0].apply(this, args);
+			while (i--) args[i] = arguments[indices[i]];
+			return fn.apply(this, args);
 		};
 	};
 
-	var uncurriedBind = functionBind && f.uncurry(functionBind);
+	uncurriedBind = functionBind && f.uncurry(functionBind);
 
 	f.call = f.curry(f.uncurry(functionCall));
 	f.apply = f.curry(f.uncurry(functionApply));
-	f.invoke = f.call(f, null);
+	f.invoke = f.call(f, _); // where `_ == null`
 	f.bind = uncurriedBind ? f.curry(uncurriedBind) : f.curry(f.curry, f.call);
-	f.bindConstructor = f.curry(uncurriedBind || function(/* fn, ctx, arg, ..*/){
+	f.bindConstructor = f.curry(uncurriedBind || function(/* fn, ctx, ...args*/){
 		var args = arrayOf.apply(_, arguments),
 				fn = args.shift(),
 				ctx = args.shift(),
@@ -109,7 +131,7 @@
 			/*jshint validthis: true */
 			return fn.apply(
 				this instanceof noop && ctx ? this : ctx,
-				arrayConcat.apply(args, arguments) // copy, don't merge
+				arrayConcat.apply(args, arguments) // copy, don't side-effectivly merge
 			);
 		}
 
@@ -126,6 +148,12 @@
 		return arguments.length > 2	? (object[key] = value) : object[key];
 	});
 
+	// ```es6
+	// f.create = function (constructor, ...args){
+	// 	return new constructor(...args);
+	// };
+	// ```
+
 	// export
 	// ------
 
@@ -135,12 +163,6 @@
 		/* global define*/
 		define(function (){ return f; });
 	} else {
-		/**
-		* restores the previous value assigned to `window.f`
-		* and returns the inner reference f holds to itself.
-		* @function f.noConflict
-		* @return {f}
-		*/
 		var prev = root.f;
 		f.noConflict = function () {
 			root.f = prev;
