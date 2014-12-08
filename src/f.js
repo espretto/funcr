@@ -7,10 +7,10 @@
 	// baseline setup
 	// --------------
 	f = {},
-	_ = null, // don't care
 	array = [],
-	
 	Array = array.constructor,
+	_ = null, // don't care
+	
 
 	// shortcuts / polyfills
 	// ---------------------
@@ -22,8 +22,9 @@
 
 	arrayConcat = array.concat,
 
-	arrayOf = Array.of || function(){
-		var args = arguments,
+	// simple polyfill until es6
+	arrayOf = f.arrayOf = Array.of || function(){
+		var args = arguments, // promote compression
 				i = args.length,
 				array = new Array(i);
 		while(i--) array[i] = args[i];
@@ -59,6 +60,7 @@
 				fn,
 				alen;
 
+		// mangle arguments as needed
 		if (typeof fnlen === 'number'){
 			fn = args.shift();
 		} else {
@@ -71,23 +73,23 @@
 
 		return function (/* ...brgs*/){
 
-			// copy the given `args`
+			// 1. copy the given `args`
 			var brgs = args.slice(), blen = alen, b = 0,
 					crgs = arguments, clen = crgs.length, c = 0;
 
-			// merge this call's arguments into them
+			// 2. merge this call's arguments into them
 			for (; c < clen && b < blen; b++) if (brgs[b] === f) brgs[b] = crgs[c++];
 
-			// append the remaining ones
+			// 3. append the remaining ones
 			for (; c < clen; c++) blen = brgs.push(crgs[c]);
 			
-			// if `f` is still among the resulting arguments
+			// 4. if `f` can't be found among the resulting arguments..
 			for (; blen-- && brgs[blen] !== f;);
 
-			// call `fn` with them
+			// 4.1. call `fn` with them
 			if (blen === -1) return fn.apply(this, brgs);
 
-			// or recurry `fn` otherwise
+			// 4.2. or recurry `fn` otherwise
 			brgs.unshift(fn);
 			return f.curry.apply(_, brgs);
 

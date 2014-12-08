@@ -15,6 +15,20 @@ describe('f unctional', function (){
     expect(f).to.have.property('VERSION');
   });
 
+  describe('.arrayOf()', function(){
+
+    it('should return the empty array without input', function () {
+      expect(f.arrayOf()).to.be.an('array');
+      expect(f.arrayOf()).to.eql([]);
+    });
+
+    it('should return an the arguments passed as an array', function () {
+      expect(f.arrayOf(1, 2, 3)).to.be.an('array');
+      expect(f.arrayOf(1, 2, 3)).to.eql([1, 2, 3]);
+    });
+
+  });
+
   describe('.o()', function (){
 
     it('should fail if no arguments passed', function (){
@@ -91,11 +105,38 @@ describe('f unctional', function (){
       expect(f.curry(3, Math.max)(1)(2)(3)).to.equal(3);
     });
 
+    it('should accept `don\'t-cares` to extend the arguments list regardless of its initial size', function(){
+      // override the `Math.max` length with 3
+      // pass 1 - recurry
+      // pass 2 - recurry
+      // pass f, f, f - recurry, no. required arguments is 5 by now
+      // pass 4 - recurry, two to go
+      // pass f, 6 - recurry, last argument is set, second to the last isn't
+      // pass 42 - argument list complete - execute the function with (1, 2, 4, 42, 6)
+      expect(f.curry(3, Math.max)(1)(2)(f, f, f)(4)(f, 6)(42)).to.equal(42);
+    });
+
   });
 
-  describe('.chsig()', function (){
+  describe('.chsig() - depends `f.arrayOf`', function (){
 
-    it.skip('still missing..');
+    it('should fail without input when calling the resulting function', function(){
+      expect(f.chsig()).to.throwError();
+    });
+
+    it('should apply no arguments to the wrapped function if no indices passed', function(){
+      
+      expect(f.chsig(f.arrayOf)(1, 2, 3)).to.eql([]);
+    });
+
+    it('should pass `undefined` for every index out of bounds', function () {
+      expect(f.chsig(f.arrayOf, 0)()).to.eql([undefined]);
+    });
+
+    it('should pass the arguments in the specified order', function(){
+      expect(f.chsig(f.arrayOf, 3, 1, 2, 0)('a', 'b', 'c', 'd')).to.eql(['d', 'b', 'c', 'a']);
+    });
+
   });
 
 });
