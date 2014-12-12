@@ -223,9 +223,6 @@
 		return bound;
 	});
 
-	f.id = function (a){ return a; };
-	f.not = function (a){ return !a; };
-	f.raise = function (a){ throw a; };
 	f.has = f.call(objectHasOwnProperty, f, f);
 	f.dot = f.curry(2, function (object, key, value){
 		return arguments.length > 2	? (object[key] = value) : object[key];
