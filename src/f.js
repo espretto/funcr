@@ -1,17 +1,35 @@
 
-(function(root){
+(function (root, factory){
+
+	if (typeof module !== 'undefined' && module.exports) {
+		module.exports = factory(root);
+	} else if (typeof define === 'function' && define.amd) {
+		/* global define*/
+		define(factory);
+	} else {
+		var f = factory(),
+				prev = root.f;
+
+		f.noConflict = function (){
+			root.f = prev;
+			return f;
+		};
+		root.f = f;
+	}
+
+}(this, function(root){
 	'use strict';
 
 	var // one to var them all
 
 	// baseline setup
 	// --------------
-	f = {},
+	f = {}, // also used as blank argument
 	array = [],
-	Array = array.constructor,
+	Array = array.constructor, // don't be fooled by global override
 	_ = null, // don't care
+	defaultContext = (function (){ return this; }()),
 	
-
 	// shortcuts / polyfills
 	// ---------------------
 	objectHasOwnProperty = f.hasOwnProperty,
@@ -22,7 +40,7 @@
 
 	arrayConcat = array.concat,
 
-	// simple polyfill until es6
+	// simple polyfill until es6. trust prior polyfills.
 	arrayOf = f.arrayOf = Array.of || function(){
 		var args = arguments, // promote compression
 				i = args.length,
@@ -37,14 +55,32 @@
 
 	f.o = function (/* ...fns*/){
 		var fns = arrayOf.apply(_, arguments),
-				i = fns.length;
+				i = fns.length,
+				defaultContext_ = defaultContext;
 
 		if (!i) throw new TypeError('reduce of empty array with no initial value');
 
 		return i === 1 ? fns[0] : function (){
-			var args = fns[--i].apply(this, arguments);
-			while (i--) args = fns[i].call(this, args);
-			return args;
+			var fns_ = fns, // lift to scope
+					i_ = i,
+					fn = fns_[--i_],
+					args = arguments, // promote compression
+					len = args.length,
+					that = this,
+					result;
+
+			// try to avoid using `.call()` or `.apply()`
+			if (that === defaultContext_) {
+				if (!len) result = fn();
+				else if (len == 1) result = fn(args[0]);
+				else result = fn.apply(that, args);
+				while (i_--) result = fns_[i_](result);
+			} else {
+				result = fn.apply(that, args);
+				while (i_--) result = fns_[i_].call(that, result);
+			}
+
+			return result;
 		};
 	};
 
@@ -58,7 +94,8 @@
 		var args = arrayOf.apply(_, arguments),
 				fnlen = args.shift(),
 				fn,
-				alen;
+				alen,
+				f_ = f; // lift to scope
 
 		// mangle arguments as needed
 		if (typeof fnlen === 'number'){
@@ -69,50 +106,94 @@
 		}
 
 		// fill up with don't-cares in case curried with less args than required.
-		for (alen = args.length; alen < fnlen;) alen = args.push(f);
+		for (alen = args.length; alen < fnlen;) alen = args.push(f_);
 
 		return function (/* ...brgs*/){
-
 			// 1. copy the given `args`
-			var brgs = args.slice(), blen = alen, b = 0,
-					crgs = arguments, clen = crgs.length, c = 0;
+			var brgs = args.slice(),
+					blen = alen,
+					b = 0,
+					crgs = arguments,
+					clen = crgs.length,
+					crg,
+					c = 0,
+					incomplete = 0,
+					f_ = f; // lift to scope
 
-			// 2. merge this call's arguments into them
-			for (; c < clen && b < blen; b++) if (brgs[b] === f) brgs[b] = crgs[c++];
+			// 2. fill blanks with `arguments`
+			for (; c < clen && b < blen; b++) {
+				if (brgs[b] === f_){
+					crg = crgs[c++];
+					brgs[b] = crg;
+					if (crg === f_) incomplete++;
+				}
+			}
+
+			// 2.1 watch out for 
+			if (!incomplete){
+				for (; b < blen; b++){
+					if (brgs[b] === f_){
+						incomplete++;
+						break;
+					}
+				}
+			}
 
 			// 3. append the remaining ones
-			for (; c < clen; c++) blen = brgs.push(crgs[c]);
+			if (incomplete) {
+				for (; c < clen; c++){
+					brgs.push(crgs[c]);
+				}
+			} else {
+				for (; c < clen; c++) {
+					crg = crgs[c];
+					brgs.push(crg);
+					if (crg === f_) incomplete++;
+				}
+			}
 			
-			// 4. if `f` can't be found among the resulting arguments..
-			for (; blen-- && brgs[blen] !== f;);
+			// 4.1 if `f` is still among the arguments, recurry
+			if (incomplete) {
+				brgs.unshift(fn);
+				return f_.curry.apply(_, brgs);
+			}
 
-			// 4.1. call `fn` with them
-			if (blen === -1) return fn.apply(this, brgs);
-
-			// 4.2. or recurry `fn` otherwise
-			brgs.unshift(fn);
-			return f.curry.apply(_, brgs);
+			// 4.2 finally call the function otherwise.
+			// functions passed are expexted bute not required
+			// to take more than one argument. don't try to avoid `.apply()`.
+			return fn.apply(this, brgs);
 
 			// ~1/3 slower functional equivalent of the above
 			// ```
-			// var brgs = Array.of.apply(_, arguments),
-			// 		crgs = args.map(function(arg){
-			// 			return arg === f && brgs.length ? brgs.shift() : arg;
-			// 		}).concat(brgs);
-
+			// var brgs = Array.of.apply(_, arguments), crgs;
+			// 
+			// crgs = args
+			//   .map(function(arg){
+			//     return arg === f && brgs.length ? brgs.shift() : arg;
+			// 	 })
+			// 	 .concat(brgs);
+			//
 			// if (!crgs.contains(f)) return fn.apply(this, crgs);
-			// else return crgs.unshift(fn), f.curry.apply(_, crgs);
+			// crgs.unshift(fn);
+			// return f.curry.apply(_, crgs);
 			// ```
 		};
 	};
 
 	f.chsig = function (/* fn, ...indices*/){
 		var indices = arrayOf.apply(_, arguments),
-				fn = indices.shift();
+				fn = indices.shift(),
+				i = indices.length;
+
 		return function (){
-			var i = indices.length,
-					args = new Array(i);
-			while (i--) args[i] = arguments[indices[i]];
+			var indices_ = indices, // lift to scope
+					i_ = i,
+					args = new Array(i_);
+
+			while (i_--) args[i_] = arguments[indices_[i_]];
+
+			// functions passed are expexted bute not required
+			// to take more than one argument. don't try to avoid `.apply()`.
 			return fn.apply(this, args);
 		};
 	};
@@ -121,7 +202,7 @@
 
 	f.call = f.curry(f.uncurry(functionCall));
 	f.apply = f.curry(f.uncurry(functionApply));
-	f.invoke = f.call(f, _); // where `_ == null`
+	f.invoke = f.call(f, defaultContext);
 	f.bind = uncurriedBind ? f.curry(uncurriedBind) : f.curry(f.curry, f.call);
 	f.bindConstructor = f.curry(uncurriedBind || function(/* fn, ctx, ...args*/){
 		var args = arrayOf.apply(_, arguments),
@@ -156,21 +237,6 @@
 	// };
 	// ```
 
-	// export
-	// ------
+	return f;
 
-	if (typeof module !== 'undefined' && module.exports) {
-		module.exports = f;
-	} else if (typeof define === 'function' && define.amd) {
-		/* global define*/
-		define(function (){ return f; });
-	} else {
-		var prev = root.f;
-		f.noConflict = function () {
-			root.f = prev;
-			return f;
-		};
-		root.f = f;
-	}
-
-}(this));
+}));

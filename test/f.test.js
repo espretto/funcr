@@ -58,6 +58,12 @@ describe('f unctional', function (){
       expect(ctx).to.have.property('value', 123);
     });
 
+    it('should pass on the implicit return value `undefined`', function (){
+      function returnArgs (){ return Array.prototype.slice.call(arguments); }
+      function returnNone (){}
+      expect(f.o(returnArgs, returnNone)()).to.eql([void 0]);
+    });
+
   });
 
   describe('.uncurry()', function (){
@@ -96,6 +102,10 @@ describe('f unctional', function (){
       expect(f.curry(Math.max)(1)(2)).to.equal(2);
     });
 
+    it('should not strip the arguments if passed more than required', function (){
+      expect(f.curry(2, Math.max)(1, 2, 3)).to.equal(3);
+    });
+
     it('should accept `don\'t-cares` and fill them in the right order', function (){
       function concat(a, b){ return a.concat(b); }
       expect(f.curry(concat, f, 'world!')('hello ')).to.equal('hello world!');
@@ -130,7 +140,7 @@ describe('f unctional', function (){
     });
 
     it('should pass `undefined` for every index out of bounds', function () {
-      expect(f.chsig(f.arrayOf, 0)()).to.eql([undefined]);
+      expect(f.chsig(f.arrayOf, 0)()).to.eql([void 0]);
     });
 
     it('should pass the arguments in the specified order', function(){
