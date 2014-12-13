@@ -3,7 +3,7 @@ funcr
 
 static utility methods to mess with javascript functions:
 
-- `o` - compose form left to right
+- `o` - compose via reduceRight
 - `curry` - recurrying as long as there are less arguments than required
 - `chsig` - change the order in which arguments are passed
 - `uncurry` - unshifts the context to the signature
