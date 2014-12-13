@@ -2,7 +2,7 @@
 (function (root, factory){
 
 	if (typeof module !== 'undefined' && module.exports) {
-		module.exports = factory(root);
+		module.exports = factory();
 	} else if (typeof define === 'function' && define.amd) {
 		/* global define*/
 		define(factory);
@@ -17,7 +17,7 @@
 		root.f = f;
 	}
 
-}(this, function(root){
+}(this, function(){
 	'use strict';
 
 	var // one to var them all
@@ -53,9 +53,8 @@
 	// ----
 	f.VERSION = '0.0.1';
 
-	f.o = function (/* ...fns*/){
-		var fns = arrayOf.apply(_, arguments),
-				i = fns.length,
+	f.o = function (...fns){
+		var i = fns.length,
 				defaultContext_ = defaultContext;
 
 		if (!i) throw new TypeError('reduce of empty array with no initial value');
@@ -90,25 +89,24 @@
 		};
 	};
 
-	f.curry = function (/* [fnlen,] fn, ...args*/){
-		var args = arrayOf.apply(_, arguments),
-				fnlen = args.shift(),
-				fn,
-				alen,
+	f.curry = function (fn, ...args){
+		var alen,
+				fnlen,
 				f_ = f; // lift to scope
 
 		// mangle arguments as needed
-		if (typeof fnlen === 'number'){
+		if (typeof fn === 'number'){
+			fnlen = fn;
 			fn = args.shift();
 		} else {
-			fn = fnlen;
 			fnlen = fn.length;
 		}
 
 		// fill up with don't-cares in case curried with less args than required.
 		for (alen = args.length; alen < fnlen;) alen = args.push(f_);
 
-		return function (/* ...brgs*/){
+		// since we don't leak `crgs` anywhere we don't have toArray them
+		return function (/* ...crgs*/){
 			// 1. copy the given `args`
 			var brgs = args.slice(),
 					blen = alen,
@@ -165,7 +163,7 @@
 
 			// ~1/3 slower functional equivalent of the above
 			// ```
-			// var brgs = Array.of.apply(_, arguments), crgs;
+			// var brgs = Array.of.apply(null, arguments), crgs;
 			// 
 			// crgs = args
 			//   .map(function(arg){
@@ -180,10 +178,8 @@
 		};
 	};
 
-	f.chsig = function (/* fn, ...indices*/){
-		var indices = arrayOf.apply(_, arguments),
-				fn = indices.shift(),
-				i = indices.length;
+	f.chsig = function (fn, ...indices){
+		var i = indices.length;
 
 		return function (){
 			var indices_ = indices, // lift to scope
@@ -204,11 +200,8 @@
 	f.apply = f.curry(f.uncurry(functionApply));
 	f.invoke = f.call(f, defaultContext);
 	f.bind = uncurriedBind ? f.curry(uncurriedBind) : f.curry(f.curry, f.call);
-	f.bindConstructor = f.curry(uncurriedBind || function(/* fn, ctx, ...args*/){
-		var args = arrayOf.apply(_, arguments),
-				fn = args.shift(),
-				ctx = args.shift(),
-				noop = function (){};
+	f.bindConstructor = f.curry(uncurriedBind || function(fn, ctx, ...args){
+		var noop = function (){};
 
 		function bound(){
 			/*jshint validthis: true */
@@ -228,12 +221,5 @@
 		return arguments.length > 2	? (object[key] = value) : object[key];
 	});
 
-	// ```es6
-	// f.create = function (constructor, ...args){
-	// 	return new constructor(...args);
-	// };
-	// ```
-
 	return f;
-
 }));

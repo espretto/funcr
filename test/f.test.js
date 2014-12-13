@@ -1,10 +1,12 @@
 /* global describe, it, beforeEach*/
 
-var f = require('./../src/f.js');
+var f = require('./../build/expanded/f.js');
 var expect = require('expect.js');
 
 describe('f unctional', function (){
 
+  // <= ie8 seems having trouble
+  // ---------------------------
   // if (typeof window != 'undefined') {
   //   beforeEach(function (done) {
   //     setTimeout(function (){ done(); }, 15);
