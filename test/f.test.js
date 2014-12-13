@@ -17,20 +17,6 @@ describe('f unctional', function (){
     expect(f).to.have.property('VERSION');
   });
 
-  describe('.arrayOf()', function(){
-
-    it('should return the empty array without input', function () {
-      expect(f.arrayOf()).to.be.an('array');
-      expect(f.arrayOf()).to.eql([]);
-    });
-
-    it('should return an the arguments passed as an array', function () {
-      expect(f.arrayOf(1, 2, 3)).to.be.an('array');
-      expect(f.arrayOf(1, 2, 3)).to.eql([1, 2, 3]);
-    });
-
-  });
-
   describe('.o()', function (){
 
     it('should fail if no arguments passed', function (){
@@ -130,7 +116,11 @@ describe('f unctional', function (){
 
   });
 
-  describe('.chsig() - depends `f.arrayOf`', function (){
+  describe('.chsig()', function (){
+
+    function arrayOf(){
+      return Array.prototype.slice.call(arguments);
+    }
 
     it('should fail without input when calling the resulting function', function(){
       expect(f.chsig()).to.throwError();
@@ -138,15 +128,15 @@ describe('f unctional', function (){
 
     it('should apply no arguments to the wrapped function if no indices passed', function(){
       
-      expect(f.chsig(f.arrayOf)(1, 2, 3)).to.eql([]);
+      expect(f.chsig(arrayOf)(1, 2, 3)).to.eql([]);
     });
 
     it('should pass `undefined` for every index out of bounds', function () {
-      expect(f.chsig(f.arrayOf, 0)()).to.eql([void 0]);
+      expect(f.chsig(arrayOf, 0)()).to.eql([void 0]);
     });
 
     it('should pass the arguments in the specified order', function(){
-      expect(f.chsig(f.arrayOf, 3, 1, 2, 0)('a', 'b', 'c', 'd')).to.eql(['d', 'b', 'c', 'a']);
+      expect(f.chsig(arrayOf, 3, 1, 2, 0)('a', 'b', 'c', 'd')).to.eql(['d', 'b', 'c', 'a']);
     });
 
   });

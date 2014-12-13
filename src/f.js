@@ -38,16 +38,7 @@
 	functionApply = Array.apply,
 	functionBind = Array.bind, uncurriedBind,
 
-	arrayConcat = array.concat,
-
-	// simple polyfill until es6. trust prior polyfills.
-	arrayOf = f.arrayOf = Array.of || function(){
-		var args = arguments, // promote compression
-				i = args.length,
-				array = new Array(i);
-		while(i--) array[i] = args[i];
-		return array;
-	};
+	arrayConcat = array.concat;
 
 	// main
 	// ----
