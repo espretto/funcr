@@ -46,7 +46,7 @@
 
   // main
   // ----
-  f.VERSION = '0.0.1';
+  f.VERSION = '1.0.0';
 
   f.o = function (...fns){
     var i = fns.length,
