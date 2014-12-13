@@ -1,6 +1,6 @@
 /* global describe, it, beforeEach*/
 
-var f = require('./../build/expanded/f.js');
+var f = require('./../build/f.js');
 var expect = require('expect.js');
 
 describe('f unctional', function (){
@@ -33,7 +33,7 @@ describe('f unctional', function (){
       function minusOne (x){ return x - 1; }
       function threeTimes (x){ return x * 3; }
       var composed = f.o(plusTwo, minusOne, threeTimes);
-      expect(composed(1)).to.equal(4);
+      expect(composed(1)).to.equal(4); // left to right 'd be 6
     });
 
     it('should call the wrapped function is the context of the wrapper', function (){
