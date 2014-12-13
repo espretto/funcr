@@ -17,4 +17,9 @@ helpers:
 
 for now, please consult the tests for usage details.
 
+licence
+-------
+[MIT][2]
+
 [1]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind#Polyfill
+[2]: http://mariusrunge.com/mit-licence.html
