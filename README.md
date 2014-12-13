@@ -13,6 +13,8 @@ helpers:
 - `has` - recurrying property check
 - `dot` - recurrying property get-/setter
 - `apply`, `call`, `invoke` - recurrying versions of native `call`, `apply`
-- `bind`, `bindConstructor` - recurrying version of native or shimmed `bind` where the latter will try to maintain the `prototype` property of the function returned.
+- `bind`, `bindConstructor` - recurrying version of native or shimmed `bind` where the latter will try to maintain the `prototype` property of the function returned as shown on [mdn][1].
 
 for now, please consult the tests for usage details.
+
+[1]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind#Polyfill
