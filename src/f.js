@@ -85,36 +85,36 @@
   };
 
   f.curry = function (fn, ...args){
-    var alen,
-        fnlen,
+    var argc,
+        fnc,
         f_ = f; // lift to scope
 
     // mangle arguments as needed
     if (typeof fn === 'number'){
-      fnlen = fn;
+      fnc = fn;
       fn = args.shift();
     } else {
-      fnlen = fn.length;
+      fnc = fn.length;
     }
 
     // fill up with don't-cares in case curried with less args than required.
-    for (alen = args.length; alen < fnlen;) alen = args.push(f_);
+    for (argc = args.length; argc < fnc;) argc = args.push(f_);
 
     // since we don't leak `crgs` anywhere we don't have toArray them
     return function (/* ...crgs*/){
       // 1. copy the given `args`
       var brgs = args.slice(),
-          blen = alen,
+          brgc = argc,
           b = 0,
           crgs = arguments,
-          clen = crgs.length,
+          crgc = crgs.length,
           crg,
           c = 0,
           incomplete = 0,
           f_ = f; // lift to scope
 
       // 2. fill blanks with `arguments`
-      for (; c < clen && b < blen; b++) {
+      for (; c < crgc && b < brgc; b++) {
         if (brgs[b] === f_){
           crg = crgs[c++];
           brgs[b] = crg;
@@ -124,8 +124,8 @@
 
       // 2.1 watch out for 
       if (!incomplete){
-        for (; b < blen; b++){
-          if (brgs[b] === f_){
+        for (; b < brgc; b++){
+          if (brgs[b] !== f_) {
             incomplete++;
             break;
           }
@@ -134,11 +134,11 @@
 
       // 3. append the remaining ones
       if (incomplete) {
-        for (; c < clen; c++){
+        for (; c < crgc; c++){
           brgs.push(crgs[c]);
         }
       } else {
-        for (; c < clen; c++) {
+        for (; c < crgc; c++) {
           crg = crgs[c];
           brgs.push(crg);
           if (crg === f_) incomplete++;
@@ -156,7 +156,7 @@
       // to take more than one argument. don't try to avoid `.apply()`.
       return fn.apply(this, brgs);
 
-      // ~1/3 slower functional equivalent of the above
+      // ~1/3 slower functional equivargc of the above
       // ```
       // var brgs = Array.of.apply(null, arguments), crgs;
       // 

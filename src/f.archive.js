@@ -1,70 +1,80 @@
-(function(){
-   var 
+f.indexOf = function (array, item){
+  for (var i = array.length; i-- && array[i] !== item;);
+  return i;
+};
 
-   objectKeys = Object.keys || function (object){
-    if (object == null) throw new TypeError('could not convert ' + object + ' to object');
-    var keys = [], key, i = 0;
-    for(key in object) if (objectHasOwnProperty.call(object, key)) keys[i++] = key;
-    return keys;
-  },
-  objectForEach = function (fn, ctx){
-    var object = this;
-    if (object == null) throw new TypeError('could not convert ' + object + ' to object');    
-    if (!isFunction(fn)) throw new TypeError(fn + ' is not a function.');
-    arrayForEach.call(Object.keys(object), function(key){
-      return fn.call(ctx, object[key], key, object);
-    });
+f.contains = function(array, item){
+  return f.indexOf(array, item) !== -1;
+};
+
+f.some = function (array, fn, ctx){
+  var len = array.length,
+      i = -1;
+  if (ctx === defaultContext) {
+    while (++i < len && !fn(array[i], i, array));
+  } else {
+    while (++i < len && !fn.call(ctx, array[i], i, array));
   }
-  objectMap = function (fn, ctx){
-    var mapped = {};
-    objectForEach.call(this, function(value, key, object){
-      mapped[key] = fn.call(ctx, value, key, object);
-    });
-    return mapped;
-  },
+  return i === len;
+};
 
-  arrayForEach = array.forEach || function(fn, ctx){
-    var array = this, len, i = 0;
-    if (array == null) throw new TypeError('could not convert ' + array + ' to object');
-    if (!isFunction(fn)) throw new TypeError(fn + ' is not a function.');
-    array = Object(array);
-    len = array.length >>> 0;
-    for (i = 0; i < len; i++){
-      if (false === fn.call(ctx, array[i], i, array)){
-        break;
-      }
+f.forEach = function(array, fn, ctx){
+  var len = array.length,
+      i = -1;
+  if (ctx === defaultContext) {
+    while(++i < len && fn(array[i], i, array) !== false);
+  } else {
+    while(++i < len && fn.call(ctx, array[i], i, array) !== false);
+  }
+};
+
+f.map = function (array, fn, ctx) {
+  var len = array.length,
+      i = -1,
+      mapped = new Array(len);
+
+  if (ctx === defaultContext) {
+    while(++i < len) mapped[i] = fn(array[i], i, array);
+  } else {
+    while(++i < len) mapped[i] = fn.call(ctx, array[i], i, array);
+  }
+};
+
+f.filter = function (array, fn, ctx) {
+  var len = array.length,
+      i = -1,
+      filtered = [],
+      item;
+
+  if (ctx === defaultContext) {
+    while(++i < len) {
+      item = array[i];
+      if (fn(item, i, array)) filtered.push(item);
     }
-  },
-  arrayMap = array.map || function (fn, ctx){
-    var mapped = [];
-    if (!isFunction(fn)) throw new TypeError(fn + ' is not a function.');
-    arrayForEach.call(this, function(value, i, array){
-      mapped.push(fn.call(ctx, value, i, array));
-    });
-    return mapped;
-  },
-  arrayReduce = array.reduce || function (array, fn, result, ctx){
-    var array = this,
-        len,
-        i = 0,
-        noinitial = arguments.length < 2;
-
-    if (array == null) throw new TypeError('could not convert ' + array + ' to object');
-    if (!isFunction(fn)) throw new TypeError(fn + ' is not a function.');
-
-    array = Object(array);
-    len = array.length >>> 0;
-
-    if (len === 0){
-      if (noinitial) throw new TypeError('reduce of empty array with no initial value');
-      return result;
+  } else {
+    while(++i < len) {
+      item = array[i];
+      if (fn.call(ctx, item, i, array)) filtered.push(item);
     }
-    if (noinitial){
-      if (len === 1) return array[0];
-      result = array[i++];
-    }
-    for (; i < len; i++) result = fn.call(ctx, result, array[i], i, array);
-    return result;
-  };
+  }
+};
 
-}());
+f.reduce = function (array, fn, result, ctx) {
+  var argc = arguments.length,
+      len = array.length,
+      i = -1;
+      
+  if (argc < 3) {
+    if (!len) throw new TypeError('reduce of empty array with no intial value');
+    result = array[0];
+    i++;
+    while (++i < len) result = fn(result, array[i]);
+  } else if (argc < 4) {
+    if (!len) return result;
+    while (++i < len) result = fn(result, array[i]);
+  } else {
+    if (!len) return result;
+    while (++i < len) result = fn.call(ctx, result, array[i]);
+  }
+  return result;
+};

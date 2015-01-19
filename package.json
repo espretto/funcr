@@ -4,6 +4,7 @@
   "description": "functional core library",
   "main": "src/f.js",
   "directories": {
+    "src": "src",
     "test": "test",
     "build": "build"
   },
