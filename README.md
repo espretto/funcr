@@ -15,7 +15,7 @@ helpers:
 - `apply`, `call`, `invoke` - recurrying versions of native `call`, `apply`
 - `bind`, `bindConstructor` - recurrying version of native or shimmed `bind` where the latter will try to maintain the `prototype` property of the function returned as shown on [mdn][1].
 
-for now, please consult the tests for usage details.
+for now, please consult the tests (`npm test`) for usage details.
 
 licence
 -------
