@@ -3,7 +3,9 @@
  * http://mariusrunge.com/mit-licence.html
  */
 
-(function (root, factory){
+/* global __COMPAT__, __VERSION__*/
+
+(function (root, factory) {
 
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = factory();
@@ -24,165 +26,258 @@
 }(this, function(){
   'use strict';
 
-  // baseline setup
-  // ============================
+/* -----------------------------------------------------------------------------
+ * baseline setup
+ */
   
-  // main object, also used as don't-care placeholder
-  var f = { VERSION: '1.0.0' },
+  var f = { VERSION: __VERSION__ },
+
+  STR_PROTOTYPE = 'prototype',
+  STR_CONSTRUCTOR = 'constructor',
+  STR_OBJECT_FUNCTION = '[object Function]',
+  STR_FUNCTION = 'function',
+
+  getContext = function () { return this; },
+  globalContext = getContext(),
 
   // avoid fake global overrides
-  Array = [].constructor,
-  Object = f.constructor,
+  Array = [][STR_CONSTRUCTOR],
+  Object = f[STR_CONSTRUCTOR],
+  Function = getContext[STR_CONSTRUCTOR],
 
-  arrayProto = Array.prototype,
-  objectProto = Object.prototype,
-  functionProto = Function.prototype,
+  arrayProto = Array[STR_PROTOTYPE],
+  objectProto = Object[STR_PROTOTYPE],
+  functionProto = Function[STR_PROTOTYPE],
 
-  objectKeys = Object.keys,
-  objectToString = objectProto.toString,
-  objectHasOwnProperty = objectProto.hasOwnProperty,
-
+  arrayPush = arrayProto.push,
   functionBind = functionProto.bind,
-  functionCall = functionProto.call,
-  functionApply = functionProto.apply,
-  functionToString = functionProto.toString,
+  objectToString = objectProto.toString,
+  mathMax = Math.max,
 
-  arrayPush = arrayProto.concat,
-  arrayIsArray = Array.isArray,
-
-  // main - independent
-  // ============================
+/* -----------------------------------------------------------------------------
+ * main
+ */
   
-  // since native code detection can always be tricked
-  // we stick with the simple version
-  isNative = f.isNative = function (fn) {
+  isFunction = f.isFunction = typeof /r/ === STR_FUNCTION ? function(fn){
+    return objectToString.call(fn) === STR_OBJECT_FUNCTION;
+  } : function (fn) {
+    return typeof fn === STR_FUNCTION;
+  },
+
+  isNative = f.isNative = function (any) {
+    return isFunction(any) && !(STR_PROTOTYPE in any);
+  },
+
+  uncurry = f.uncurry = function (fn, argc_){
+    var argc = argc_ || fn.length;
     return (
-      typeof fn === 'function' &&
-      functionToString.call(fn).indexOf('[native code]') !== -1
+      argc === 0 ? function (ctx) { return fn.call(ctx); } :
+      argc === 1 ? function (ctx, a) { return fn.call(ctx, a); } :
+      argc === 2 ? function (ctx, a, b) { return fn.call(ctx, a, b); } :
+      argc === 3 ? function (ctx, a, b, c) { return fn.call(ctx, a, b, c); } :
+                   function (ctx, ...args) { return fn.apply(ctx, args); }
     );
   },
-
-  baseForOwn = (isNative(objectKeys) ?
-    function (object, fn) {
-      f.forEach(objectKeys, function (key){
-        return fn(object[key], key, object);
-      });
-    } :
-    function (object, fn) {
-      var key;
-      if (object.hasOwnProperty) {
-        for (key in object) {
-          if (object.hasOwnProperty(key)) {
-            if (fn(object[key], key, object) === false) break;
-          }
-        }
-      } else {
-        for (key in object) {
-          if (objectHasOwnProperty.call(object, key)) {
-            if (fn(object[key], key, object) === false) break;
-          }
-        }
-      }
-    }
-  ), ///baseForOwn
-
-  uncurry = function (fn){
-    return function(){
-      return functionCall.apply(fn, arguments);
-    };
-  },
   
-  thisify = function (fn, ctx, argc) {
+  thisify = f.thisify = function (fn, ctx, argc_) {
+    var argc = argc_ || fn.length;
     return (
+      (ctx == null || ctx === globalContext) ? fn :
+      argc === 0 ? function () { return fn.call(ctx); } :
       argc === 1 ? function (a) { return fn.call(ctx, a); } :
       argc === 2 ? function (a, b) { return fn.call(ctx, a, b); } :
       argc === 3 ? function (a, b, c) { return fn.call(ctx, a, b, c); } :
       argc === 4 ? function (a, b, c, d) { return fn.call(ctx, a, b, c, d); } :
-                   function () { return fn.apply(ctx, arguments); }
+                   function (...args) { return fn.apply(ctx, args); }
     );
   };
 
-  f.thisify = thisify;
+  f.call = uncurry(functionProto.call);
+  f.apply = uncurry(functionProto.apply);
 
-  f.uncurry = uncurry;
-
-  f.call = uncurry(functionCall);
-
-  f.apply = uncurry(functionApply);
-
-  f.hasOwn = function (object, key) { // don't uncurry for speed
-    return objectHasOwnProperty.call(object, key);
+  f.dot = function (object, key){
+    return object[key];
   };
+
+  f.dotset = function (object, key, value){
+    return (object[key] = value);
+  };
+
+  f.o = function (into, from) {
+    return function () {
+      var arguments_ = arguments,
+          argc = arguments_.length;
+
+      if (argc < 4) {
+        return into(
+          argc === 0 ? from() :
+          argc === 1 ? from(arguments_[0]) :
+          argc === 2 ? from(arguments_[0], arguments_[1]) :
+                       from(arguments_[0], arguments_[1], arguments_[2])
+        );
+      } else {
+        var args = new Array(argc);
+        args[0] = args; // preset as variatically typed array
+        while (argc--) args[argc] = arguments_[argc];
+        return into(from.apply(null, args));
+      }
+    };
+  };
+
+  f.funcat = function (...fns){
+    return function (...args) {
+      return f.map(fns, function(fn){
+        var fnLength = fn.length;
+        return (
+          fnLength === 0 ? fn() :
+          fnLength === 1 ? fn(args.shift()) :
+          fnLength === 2 ? fn(args.shift(), args.shift()) :
+          fnLength === 3 ? fn(args.shift(), args.shift(), args.shift()) :
+                           fn.apply(null, args.splice(0, fnLength))
+        );
+      });
+    };
+  };
+
+  f.curry = function (/*[fnLength]*/ fn_, ...args){
+
+    // `fn` may be reassigned and we're mentioning `arguments`
+    var fn = fn_,
+        argc,
+        fnLength;
+
+    // swap arguments as needed
+    if (isFunction(fn)){
+      fnLength = fn.length;
+    } else {
+      fnLength = fn;
+      fn = args.shift();
+    }  
+    
+    // fill up with don't-cares in case curried with less args than required.
+    for (argc = args.length; argc < fnLength;) argc = args.push(f);
+
+    return function (...brgs){
+      var crgs = f.map(args, function(arg){
+        return arg !== f ? arg : brgs.shift();
+      });
+
+      arrayPush.apply(crgs, brgs);
+
+      if (!f.contains(crgs, f)) return fn.apply(null, crgs);
+      
+      crgs.unshift(fn);
+      return f.curry.apply(null, crgs);
+    };
+  };
+
+  f.chsig = function (fn, ...indices_){
+    return function (...args_){
+      var len = args_.length,
+          indices = f.map(indices_, function (index) {
+            return index < 0 ? mathMax(0, index + len) : index;
+          }),
+          args = f.map(indices, function (index) {
+            return args_[index];
+          });
+
+      if (indices.length) arrayPush.apply(args, args_.slice(mathMax.apply(null, indices)));
+
+      return fn.apply(null, args);
+    };
+  };
+
+  /* ---------------------------------------------------------------------------
+   * Object functions
+   */
+
+  var objectKeys = Object.keys,
+      hasOwn = f.hasOwn = uncurry(objectProto.hasOwnProperty, 1),
+      baseForOwn; // lazy def
+
+  if (__COMPAT__ && !isNative(objectKeys)) {
+    
+    objectKeys = function (object) {
+      var keys = [];
+      for (var key in object) if (hasOwn(object, key)) keys.push(key);
+      return keys;
+    };
+
+    // if Object.keys isn't natively available avoid iterating twice,
+    // once for the keys and once for the values.
+    baseForOwn = function (object, fn) {
+      for (var key in object) {
+        if (hasOwn(object, key) && fn(object[key], key, object) === false) {
+          break;
+        }
+      }
+    };
+    
+  } else {
+    baseForOwn = function (object, fn) {
+      // if `Object.keys` is native `forEach` is, too.
+      objectKeys(object).forEach(function (key) {
+        return fn(object[key], key, object);
+      });
+    };
+  }
+
+  f.keys = objectKeys;
 
   f.forOwn = function (object, fn, ctx) {
-    baseForOwn(object, arguments.length > 2 ? thisify(fn, ctx, 3) : fn);
+    baseForOwn(object, thisify(fn, ctx, 3));
   };
 
-  f.dot = function (object, key, value){
-    return arguments.length > 2 ? (object[key] = value) : object[key];
-  };
+  /* ---------------------------------------------------------------------------
+   * Array base functions
+   */
 
-  f.o = function (fnA, fnB) {
-    return function () {
-      return fnA(fnB.apply(null, arguments));
-    };
-  };
+  if (__COMPAT__) {
 
-  f.oWith = function (fnA, fnB) {
-    return function () {
-      return fnA.call(this, fnB.apply(this, arguments));
-    };
-  };
+    var compat = {
 
-  // compat
-  // ============================
+      forEach: function (array, fn) {
+        var len = array.length,
+            i = -1;
+        while (++i < len && fn(array[i], i, array) !== false);
+      },
 
-  /* global COMPAT*/
-  if (COMPAT) {
+      some: function (array, fn) {
+        var len = array.length,
+            i = -1;
+        while (++i < len && !fn(array[i], i, array));
+        return i !== len;
+      },
 
-    // context-free polyfills
-    // --------------------------
+      every: function (array, fn) {
+        var len = array.length,
+            i = -1;
+        while (++i < len && fn(array[i], i, array));
+        return i === len;
+      },
 
-    var baseForEach = function (array, fn) {
-      var len = array.length,
-          i = -1;
-      while (++i < len && fn(array[i], i, array) !== false);
-    },
+      map: function (array, fn) {
+        var len = array.length,
+            i = -1,
+            mapped = new Array(len);
 
-    baseSome = function (array, fn) {
-      var len = array.length,
-          i = -1;
-      while (++i < len && !fn(array[i], i, array));
-      return i !== len;
-    },
+        while (++i < len) mapped[i] = fn(array[i], i, array);
+        return mapped;
+      },
 
-    baseEvery = function (array, fn) {
-      var len = array.length,
-          i = -1;
-      while (++i < len && fn(array[i], i, array));
-      return i === len;
-    },
+      filter: function (array, fn) {
+        var len = array.length,
+            i = -1,
+            j = -1,
+            filtered = [],
+            item;
 
-    baseMap = function (array, fn) {
-      var len = array.length,
-          i = -1,
-          mapped = new Array(len);
-
-      while (++i < len) mapped[i] = fn(array[i], i, array);
-      return mapped;
-    },
-
-    baseFilter = function (array, fn) {
-      var len = array.length,
-          i = -1,
-          filtered = [],
-          item;
-
-      while (++i < len) {
-        item = array[i];
-        if (fn(item, i, array)) filtered.push(item);
+        while (++i < len) {
+          item = array[i];
+          if (fn(item, i, array)) filtered[++j] = item;
+        }
+        return filtered; 
       }
-      return filtered; 
     },
 
     baseReduce = function (array, fn, accum_) {
@@ -192,9 +287,9 @@
           
       if (arguments.length < 3) {
         if (!len) throw new TypeError('reduce of empty array with no initial value');
-        accum = array[i=0]; // take and skip first
+        accum = array[++i]; // take and skip first
       }
-      while (++i < len) accum = fn(accum, array[i], i+1, array);
+      while (++i < len) accum = fn(accum, array[i], i, array);
       return accum;
     },
 
@@ -210,159 +305,90 @@
       return accum;
     };
 
-    // static function polyfills
-    // --------------------------
+    /* -------------------------------------------------------------------------
+     * Array public functions
+     */
 
-    var compat = {
+    baseForOwn(compat, function (baseFn, fnName, compat) {
+      var thisify = thisify; // lift to scope
+      compat[fnName] = function (array, fn, ctx) {
+        return baseFn(array, thisify(fn, ctx, 3));
+      };
+    });
 
-      indexOf: function (array, item, offset) {
-        var len = array.length,
-            i = (+offset || 0) - 1;
+    compat.indexOf = function (array, item, offset) {
+      var len = array.length,
+          i = (+offset || 0) - 1;
 
-        while (++i < len && array[i] !== item);
-        return i % len || -1;
-      },
-
-      lastIndexOf: function (array, item, offset_) {
-        var offset = +offset_ || 0;
-        for (var i = array.length; i-- > offset && array[i] !== item;);
-        return i;
-      },
-
-      contains: function (array, item){
-        return f.indexOf(array, item) !== -1;
-      },
-
-      some: function (array, fn, ctx){
-        return baseSome(array, arguments.length > 2 ? thisify(fn, ctx, 3) : fn);
-      },
-
-      every: function (array, fn, ctx){
-        return baseEvery(array, arguments.length > 2 ? thisify(fn, ctx, 3) : fn);
-      },
-
-      forEach: function (array, fn, ctx){
-        baseForEach(array, arguments.length > 2 ? thisify(fn, ctx, 3) : fn);
-      },
-
-      map: function (array, fn, ctx) {
-        return baseMap(array, arguments.length > 2 ? thisify(fn, ctx, 3) : fn);
-      },
-
-      filter: function (array, fn, ctx) {
-        return baseFilter(array, arguments.length > 2 ? thisify(fn, ctx, 3) : fn);
-      },
-
-      reduce: function (array, fn, accum, ctx) {
-        var argc = arguments.length;
-        return (
-          argc > 3 ? baseReduce(array, thisify(fn, ctx, 4), accum) :
-          argc > 2 ? baseReduce(array, fn, accum) :
-                     baseReduce(array, fn)
-        );
-      },
-
-      reduceRight: function (array, fn, accum, ctx) {
-        var argc = arguments.length;
-        return (
-          argc > 3 ? baseReduceRight(array, thisify(fn, ctx, 4), accum) :
-          argc > 2 ? baseReduceRight(array, fn, accum) :
-                     baseReduceRight(array, fn)
-        );
-      }
+      while (++i < len) if (array[i] === item) return i;
+      return -1;
     };
 
-    // patch if not native
-    // --------------------------
-    
-    f.forOwn(compat, function(staticFn, name){
-      var protoFn = arrayProto[name];
-      f[name] = isNative(protoFn) ? uncurry(protoFn) : staticFn;
+    compat.lastIndexOf = function (array, item, offset) {
+      var i = array.length;
+      offset = (+offset || 0);
+
+      while (offset < i--) if (array[i] === item) return i;
+      return -1;
+    };
+
+    compat.contains = function (array, item){
+      return f.indexOf(array, item) !== -1;
+    };
+
+    compat.reduce = function (array, fn, accum, ctx) {
+      var argc = arguments.length;
+      return (
+        argc > 3 ? baseReduce(array, thisify(fn, ctx, 4), accum) :
+        argc > 2 ? baseReduce(array, fn, accum) :
+                   baseReduce(array, fn)
+      );
+    };
+
+    compat.reduceRight = function (array, fn, accum, ctx) {
+      var argc = arguments.length;
+      return (
+        argc > 3 ? baseReduceRight(array, thisify(fn, ctx, 4), accum) :
+        argc > 2 ? baseReduceRight(array, fn, accum) :
+                   baseReduceRight(array, fn)
+      );
+    };
+
+    baseForOwn(compat, function(staticFn, fnName){
+      var protoFn = arrayProto[fnName];
+      f[fnName] = isNative(protoFn) ? uncurry(protoFn) : staticFn;
     });
 
-    if (!isNative(arrayIsArray)) {
-      var arrayRepr = '[object Array]';
-      f.isArray = function (x){ return objectToString.call(x) === arrayRepr; };
-    }
-
-    if (!isNative(functionBind)) {
-      f.bind = function(fn, ctx, ...args){
-        var noop = function () {};
-        function bound() {
-          /*jshint validthis: true */
-          var brgs = args.slice();
-          arrayPush.apply(brgs, arguments);
-          return fn.apply(this instanceof noop && ctx ? this : ctx, brgs);
-        }
-        noop.prototype = fn.prototype;
-        bound.prototype = new noop();
-        return bound;
-      };
-    }
   } else {
-
-    // adopt/uncurry natives
-    // --------------------------
-    
-    ('indexOf,lastIndexOf,contains,some,' +
-      'every,map,forEach,filter,reduce,reduceRight'
-    ).split(',').forEach(function (name){
-      var fn = Array[fn];
-      f[name] = isNative(fn) ? fn : uncurry(arrayProto[name]);
+    ('contains,every,filter,forEach,indexOf,lastIndexOf,map,reduce,reduceRight,some')
+    .split(',')
+    .forEach(function (fnName) {
+      var fn = Array[fnName];
+      f[fnName] = isNative(fn) ? fn : uncurry(arrayProto[fnName]);
     });
-
-    f.isArray = arrayIsArray;
-
-    f.bind = uncurry(functionBind);
   }
 
-  // main - dependent
-  // ============================
+/* -----------------------------------------------------------------------------
+ * Function functions
+ */
 
-  f.curry = function (/*[fnLength]*/ fn, ...args){
-    var argc,
-        fnLength,
-        f_ = f; // lift to scope
-
-    // swap arguments as needed
-    if (typeof fn === 'number'){
-      fnLength = fn;
-      fn = args.shift();
-    } else {
-      fnLength = fn.length;
-    }
-
-    // fill up with don't-cares in case curried with less args than required.
-    for (argc = args.length; argc < fnLength;) argc = args.push(f_);
-
-    return function (...brgs){
-      var crgs,
-          f = f_; // lift to scope again
-      
-      crgs = f.map(args, function(arg){
-        return arg !== f ? arg : brgs.shift();
-      });
-
-      arrayPush.apply(crgs, brgs);
-      if (!crgs.contains(f)) return fn.apply(this, crgs);
-      crgs.unshift(fn);
-      return f.curry.apply(null, crgs);
+  if (__COMPAT__ && !isNative(functionBind)) {
+    f.bind = function (fn, ctx, ...args){
+      var noop = function () {};
+      function bound (...brgs) {
+        /*jshint validthis: true */
+        return fn.apply(
+          this instanceof noop && ctx ? this : ctx,
+          args.concat(brgs)
+        );
+      }
+      noop[STR_PROTOTYPE] = fn[STR_PROTOTYPE];
+      bound[STR_PROTOTYPE] = new noop();
+      return bound;
     };
-  };
-
-  f.chsig = function (fn, ...indices){
-    return function (...args){
-      return fn.apply(this, f.map(indices, function (index) {
-        return args[index];
-      }));
-    };
-  };
-
-  // lifted to arrays
-  // ----------------
-  
-  f.oAll = f.curry(f.reduce, f, f.o);
-  f.oAllWith = f.curry(f.reduce, f, f.oWith);
+  } else {
+    f.bind = uncurry(functionBind);
+  }
 
   return f;
 }));
