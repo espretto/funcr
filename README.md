@@ -26,10 +26,10 @@ native, uncurried, shim | `f.contains(array, item)`
  | `f.curry(fn, ...arg)`
  | `f.dot(object/array, key/index)`
  | `f.dotset(object/array, key/index, value)`
-native, uncurried, shim | `f.every(array, iterator [, ctx])`
-native, uncurried, shim | `f.filter(array, iterator [, ctx])`
-native, uncurried, shim | `f.forEach(array, iterator [, ctx])`
- | `f.forOwn(object, iterator [, ctx])`
+native, uncurried, shim | `f.every(array, iter [, ctx])`
+native, uncurried, shim | `f.filter(array, iter [, ctx])`
+native, uncurried, shim | `f.forEach(array, iter [, ctx])`
+ | `f.forOwn(object, iter [, ctx])`
  | `f.funcat(...fn)`
 native, uncurried | `f.hasOwn(object, key)`
 native, uncurried, shim | `f.indexOf(array, item [, offset])`
@@ -37,12 +37,14 @@ native, uncurried, shim | `f.indexOf(array, item [, offset])`
  | `f.isNative(any)`
 native, shim | `f.keys(object)`
 native, uncurried, shim | `f.lastIndexOf(array, item [, offset])`
-native, uncurried, shim | `f.map(array, iterator [, ctx])`
+native, uncurried, shim | `f.map(array, iter [, ctx])`
  | `f.noConflict()`
  | `f.o(into, from)`
-native, uncurried, shim | `f.reduce(array, iterator [, accumulator [, ctx]])`
-native, uncurried, shim | `f.reduceRight(array, iterator [, accumulator [, ctx]])`
-native, uncurried, shim | `f.some(array, iterator [, ctx])`
+native, uncurried, shim | `f.reduce(array, iter [, aggregate])`
+ | `f.reduceWith(array, iter [, ctx [, aggregate]])`
+native, uncurried, shim | `f.reduceRight(array, iter [, aggregate])`
+ | `f.reduceRightWith(array, iter [, ctx [, aggregate]])`
+native, uncurried, shim | `f.some(array, iter [, ctx])`
  | `f.thisify(fn, ctx [, fnLength])`
  | `f.uncurry(fn [, fnLength])`
 

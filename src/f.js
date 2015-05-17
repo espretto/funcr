@@ -280,31 +280,6 @@
       }
     },
 
-    baseReduce = function (array, fn, accum_) {
-      var accum = accum_,
-          len = array.length,
-          i = -1;
-          
-      if (arguments.length < 3) {
-        if (!len) throw new TypeError('reduce of empty array with no initial value');
-        accum = array[++i]; // take and skip first
-      }
-      while (++i < len) accum = fn(accum, array[i], i, array);
-      return accum;
-    },
-
-    baseReduceRight = function (array, fn, accum_) {
-      var accum = accum_,
-          i = array.length;
-          
-      if (arguments.length < 3) {
-        if (!i) throw new TypeError('reduce of empty array with no initial value');
-        accum = array[--i]; // take and skip last
-      }
-      while (i--) accum = fn(accum, array[i], i, array);
-      return accum;
-    };
-
     /* -------------------------------------------------------------------------
      * Array public functions
      */
@@ -336,22 +311,29 @@
       return f.indexOf(array, item) !== -1;
     };
 
-    compat.reduce = function (array, fn, accum, ctx) {
-      var argc = arguments.length;
-      return (
-        argc > 3 ? baseReduce(array, thisify(fn, ctx, 4), accum) :
-        argc > 2 ? baseReduce(array, fn, accum) :
-                   baseReduce(array, fn)
-      );
+    compat.reduce = function (array, fn, aggregate) {
+      var aggregate_ = aggregate,
+          len = array.length,
+          i = -1;
+          
+      if (arguments.length < 3) {
+        if (!len) throw new TypeError('reduce of empty array with no initial value');
+        aggregate_ = array[++i]; // take and skip first
+      }
+      while (++i < len) aggregate_ = fn(aggregate_, array[i], i, array);
+      return aggregate_;
     };
 
-    compat.reduceRight = function (array, fn, accum, ctx) {
-      var argc = arguments.length;
-      return (
-        argc > 3 ? baseReduceRight(array, thisify(fn, ctx, 4), accum) :
-        argc > 2 ? baseReduceRight(array, fn, accum) :
-                   baseReduceRight(array, fn)
-      );
+    compat.reduceRight = function (array, fn, aggregate) {
+      var aggregate_ = aggregate,
+          i = array.length;
+          
+      if (arguments.length < 3) {
+        if (!i) throw new TypeError('reduce of empty array with no initial value');
+        aggregate_ = array[--i]; // take and skip last
+      }
+      while (i--) aggregate_ = fn(aggregate_, array[i], i, array);
+      return aggregate_;
     };
 
     baseForOwn(compat, function(staticFn, fnName){
@@ -367,6 +349,23 @@
       f[fnName] = isNative(fn) ? fn : uncurry(arrayProto[fnName]);
     });
   }
+
+  /* ---------------------------------------------------------------------------
+   * Array reduce[Right] with context
+   */
+
+  f.forEach(['reduce', 'reduceRight'], function (fnName) {
+    var reducer = f[fnName];
+
+    f[fnName + 'With'] = function (array, fn, ctx, aggregate) {
+      var argc = arguments.length;
+      return (
+        argc > 3 ? reducer(array, thisify(fn, ctx, 4), aggregate) :
+        argc > 2 ? reducer(array, thisify(fn, ctx, 4)) :
+                   reducer(array, fn)
+      );
+    };
+  });
 
 /* -----------------------------------------------------------------------------
  * Function functions
