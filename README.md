@@ -25,6 +25,7 @@ native, uncurried | `f.call(fn, ctx, ...arg)`
 native, uncurried, shim | `f.contains(array, item)`
  | `f.curry(fn, ...arg)`
  | `f.dot(object/array, key/index)`
+ | `f.dotown(object, key)`
  | `f.dotset(object/array, key/index, value)`
 native, uncurried, shim | `f.every(array, iter [, ctx])`
 native, uncurried, shim | `f.filter(array, iter [, ctx])`

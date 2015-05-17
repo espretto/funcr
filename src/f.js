@@ -99,6 +99,10 @@
     return object[key];
   };
 
+  f.dotown = function (object, key) {
+    return hasOwn(object, key) && object[key] || f;
+  };
+
   f.dotset = function (object, key, value){
     return (object[key] = value);
   };
