@@ -43,6 +43,7 @@
   // avoid fake global overrides
   Array = [][STR_CONSTRUCTOR],
   Object = f[STR_CONSTRUCTOR],
+  Number = (1)[STR_CONSTRUCTOR],
   Function = getContext[STR_CONSTRUCTOR],
 
   arrayProto = Array[STR_PROTOTYPE],
@@ -66,6 +67,10 @@
 
   isNative = f.isNative = function (any) {
     return isFunction(any) && !(STR_PROTOTYPE in any);
+  },
+
+  toInteger = f.toInteger = Number.toInteger || function (n) {
+    return (n = +n) ? isFinite(n) ? n - (n%1) : n : 0;
   },
 
   uncurry = f.uncurry = function (fn, argc_){
@@ -189,6 +194,20 @@
 
       return fn.apply(null, args);
     };
+  };
+
+  f.range = function (start, step, end) {
+    var argc = arguments.length,
+        start_ = start,
+        step_ = step,
+        end_ = end,
+        result = [];
+
+    if (argc < 2) start_ = 0, step_ = 1, end_ = start || 0;
+    else if (argc < 3)        step_ = 1, end_ = step;
+
+    for (; start_ < end_; start_ += step_) result.push(start_);
+    return result;
   };
 
   /* ---------------------------------------------------------------------------
