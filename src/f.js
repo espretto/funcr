@@ -26,9 +26,9 @@
 }(this, function(){
   'use strict';
 
-/* -----------------------------------------------------------------------------
- * baseline setup
- */
+  /* ---------------------------------------------------------------------------
+   * baseline setup
+   */
   
   var f = { VERSION: __VERSION__ },
 
@@ -54,9 +54,9 @@
   objectToString = objectProto.toString,
   mathMax = Math.max,
 
-/* -----------------------------------------------------------------------------
- * main
- */
+  /* ---------------------------------------------------------------------------
+   * main
+   */
   
   isFunction = f.isFunction = typeof /r/ === STR_FUNCTION ? function(fn){
     return objectToString.call(fn) === STR_OBJECT_FUNCTION;
@@ -107,7 +107,7 @@
     return (object[key] = value);
   };
 
-  f.o = function (into, from) {
+  f.compose = function (into, from) {
     return function () {
       var arguments_ = arguments,
           argc = arguments_.length;
@@ -233,7 +233,7 @@
   };
 
   /* ---------------------------------------------------------------------------
-   * Array base functions
+   * Array functions
    */
 
   if (__COMPAT__) {
@@ -282,11 +282,7 @@
         }
         return filtered; 
       }
-    },
-
-    /* -------------------------------------------------------------------------
-     * Array public functions
-     */
+    };
 
     baseForOwn(compat, function (baseFn, fnName, compat) {
       var thisify = thisify; // lift to scope
@@ -371,9 +367,9 @@
     };
   });
 
-/* -----------------------------------------------------------------------------
- * Function functions
- */
+  /* ---------------------------------------------------------------------------
+   * Function functions
+   */
 
   if (__COMPAT__ && !isNative(functionBind)) {
     f.bind = function (fn, ctx, ...args){
@@ -392,6 +388,17 @@
   } else {
     f.bind = uncurry(functionBind);
   }
+
+  /* ---------------------------------------------------------------------------
+   * aliases
+   */
+  
+  f.o = f.compose;
+  f.c = f.curry;
+  
+  /* ---------------------------------------------------------------------------
+   * export
+   */
 
   return f;
 }));
