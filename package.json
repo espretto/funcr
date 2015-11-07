@@ -1,6 +1,6 @@
 {
   "name": "funcr",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "functional core library",
   "main": "src/f.js",
   "directories": {
@@ -9,7 +9,8 @@
     "build": "build"
   },
   "scripts": {
-    "test": "mocha"
+    "build": "webpack src/funcr.js --output-file ./built/funcr.min.js --optimize-minimize",
+    "gzip": "gzip -c ./built/funcr.min.js > ./built/funcr.min.js.gz && ls -la ./built"
   },
   "keywords": [
     "functional programming",
@@ -20,14 +21,6 @@
   "author": "espretto",
   "license": "MIT",
   "devDependencies": {
-    "expect.js": "^0.3.1",
-    "gulp": "^3.8.10",
-    "gulp-browserify": "^0.5.0",
-    "gulp-gzip": "^1.1.0",
-    "gulp-jshint": "^1.9.0",
-    "gulp-rename": "^1.2.0",
-    "gulp-replace": "^0.5.0",
-    "gulp-uglify": "^1.0.2",
-    "mocha": "^2.0.1"
+    "webpack": "^1.12.3"
   }
 }
