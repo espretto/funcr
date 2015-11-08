@@ -2,13 +2,12 @@
  * only suitable for measuring durations as accurately as
  * possible by browser means.
  */
+var Date_ = Date // scope lift
 
-var tick = (typeof performance !== 'undefined' ? performance : Date).now
+var now = Date_.now
 
-if (!tick || 'prototype' in tick) {
-  tick = function () {
-    return new Date().getTime()
-  }
-}
-
-module.exports = tick
+module.exports = typeof performance !== 'undefined'
+  ? function () { return performance.now() }
+  : (!now || 'prototype' in now)
+  ? function () { return new Date_().getTime() }
+  : now
