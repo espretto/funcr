@@ -7,7 +7,7 @@ define(function () {
 
   var ERR_TEXT = 'reduce of empty array with no initial value'
 
-  module.exports = function (array, func, accum) {
+  return function (array, func, accum) {
     var len = array.length
     var i = -1
         
