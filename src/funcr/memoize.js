@@ -1,19 +1,23 @@
+//>>excludeStart('amdefine', true);
+if (typeof define !== 'function') { var define = require('amdefine')(module) }
+//>>excludeEnd('amdefine');
 
-var rest = require('./rest')
+define(['./rest'], function (rest) {
+  
+  var hasOwnProperty = Object.prototype.hasOwnProperty
 
-var hasOwnProperty = Object.prototype.hasOwnProperty
+  return function (func, hash) {
+    var memoized = rest(function (args) {
+      var key = hash ? hash(args) : args.join('|')
+      var cache = memoized.cache
 
-module.exports = function (func, hash) {
-  var memoized = rest(function (args) {
-    var key = hash ? hash(args) : args.join('|')
-    var cache = memoized.cache
+      return hasOwnProperty.call(cache, key)
+        ? cache[key]
+        : (cache[key] = func.apply(this, args))
+    })
 
-    return hasOwnProperty.call(cache, key)
-      ? cache[key]
-      : (cache[key] = func.apply(this, args))
-  })
+    memoized.cache = {}
 
-  memoized.cache = {}
-
-  return memoized
-}
+    return memoized
+  }
+})

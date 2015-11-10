@@ -1,21 +1,40 @@
+//>>excludeStart('amdefine', true);
+if (typeof define !== 'function') { var define = require('amdefine')(module) }
+//>>excludeEnd('amdefine'); ----------------------------------------------------
+
 /*!
  * funcr released under MIT licence
  * http://mariusrunge.com/mit-licence.html
  */
+define([
+  './funcr/ns',
 
-var ns = require('./funcr/ns')
+  './funcr/append',
+  './funcr/compose',
+  './funcr/curry',
+  './funcr/chsig',
+  './funcr/debounce',
+  './funcr/lift',
+  './funcr/memoize',
+  './funcr/range',
+  './funcr/rest',
+  './funcr/spread',
+  './funcr/thisify',
+  './funcr/uncurry',
+], function (ns, append, compose, curry, chsig, debounce, lift, memoize, range, rest, spread, thisify, uncurry) {
 
-ns.append = require('./funcr/append')
-ns.compose = require('./funcr/compose')
-ns.curry = require('./funcr/curry')
-ns.chsig = require('./funcr/chsig')
-ns.debounce = require('./funcr/debounce')
-ns.lift = require('./funcr/lift')
-ns.memoize = require('./funcr/memoize')
-ns.range = require('./funcr/range')
-ns.rest = require('./funcr/rest')
-ns.spread = require('./funcr/spread')
-ns.thisify = require('./funcr/thisify')
-ns.uncurry = require('./funcr/uncurry')
+  ns.append = append;
+  ns.compose = compose;
+  ns.curry = curry;
+  ns.chsig = chsig;
+  ns.debounce = debounce;
+  ns.lift = lift;
+  ns.memoize = memoize;
+  ns.range = range;
+  ns.rest = rest;
+  ns.spread = spread;
+  ns.thisify = thisify;
+  ns.uncurry = uncurry;
 
-module.exports = ns
+  return ns;
+})

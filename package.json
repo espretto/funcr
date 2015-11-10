@@ -2,7 +2,7 @@
   "name": "funcr",
   "version": "0.7.0",
   "description": "functional core library",
-  "main": "src/f.js",
+  "main": "src/funcr.js",
   "directories": {
     "src": "src",
     "test": "test",

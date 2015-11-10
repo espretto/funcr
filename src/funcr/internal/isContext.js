@@ -1,6 +1,13 @@
+//>>excludeStart('amdefine', true);
+if (typeof define !== 'function') { var define = require('amdefine')(module) }
+//>>excludeEnd('amdefine'); ----------------------------------------------------
 
-var defaultContext = Function('return this')()
+define(function () {
+  
+  var defaultContext = Function('return this')()
+  
+  return function (any) {
+    return any != null && any !== defaultContext
+  }
+})
 
-module.exports = function (any) {
-  return any != null && any !== defaultContext
-}

@@ -1,15 +1,21 @@
+//>>excludeStart('amdefine', true);
+if (typeof define !== 'function') { var define = require('amdefine')(module) }
+//>>excludeEnd('amdefine'); ----------------------------------------------------
 
-var rest = require('./rest')
-var map = require('./internal/map')
+define([
+  './rest',
+  './internal/map'
+], function () {
 
-function prop (object) {
-  return function (key) {
-    return object[key]
+  function prop (object) {
+    return function (key) {
+      return object[key]
+    }
   }
-}
 
-module.exports = rest(function (func, indices) {
-  return rest(function (args) {
-    return func.apply(this, map(indices, prop(args)))
+  return rest(function (func, indices) {
+    return rest(function (args) {
+      return func.apply(this, map(indices, prop(args)))
+    })
   })
 })

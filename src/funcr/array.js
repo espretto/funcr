@@ -1,4 +1,9 @@
+//>>excludeStart('amdefine', true);
+if (typeof define !== 'function') { var define = require('amdefine')(module) }
+//>>excludeEnd('amdefine'); ----------------------------------------------------
 
-module.exports = function (len) {
-  return Array.apply(null, Array(len))
-}
+define(function () {
+  return function (len) {
+    return Array.apply(null, Array(len))
+  }
+})

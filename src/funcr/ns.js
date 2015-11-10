@@ -1,5 +1,12 @@
+//>>excludeStart('amdefine', true);
+if (typeof define !== 'function') { var define = require('amdefine')(module) }
+//>>excludeEnd('amdefine'); ----------------------------------------------------
 
-var ns = { that: {} }
-ns.arg = ns
+define(function () {
 
-module.exports = ns
+  var ns = { that: {} }
+
+  ns.arg = ns
+
+  return ns
+})
