@@ -5,15 +5,13 @@
   "main": "src/funcr.js",
   "directories": {
     "src": "src",
-    "test": "test",
-    "build": "build"
+    "built": "built"
   },
   "scripts": {
-    "build": "webpack src/funcr.js --output-file ./built/funcr.min.js --optimize-minimize",
-    "gzip": "gzip -c ./built/funcr.min.js > ./built/funcr.min.js.gz && ls -la ./built"
+    "gzip": "find ./built -type f -name '*.js' -exec sh -c 'gzip -c {} > {}.gz' \\;"
   },
   "keywords": [
-    "functional programming",
+    "functional",
     "curry",
     "compose",
     "change signatures"
@@ -21,6 +19,9 @@
   "author": "espretto",
   "license": "MIT",
   "devDependencies": {
-    "webpack": "^1.12.3"
+    "almond": "^0.3.1",
+    "grunt-webpack": "^1.0.11",
+    "webpack": "^1.12.3",
+    "webpack-dev-server": "^1.12.1"
   }
 }
