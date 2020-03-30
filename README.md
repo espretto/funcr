@@ -1,6 +1,8 @@
 funcr
 =====
-utility library to help write functional javascript code.
+utility belt to help write functional javascript. 
+
+**deprecation notice:** _funcr_ aimed to compensate for ES5's missing native language features to write functional javascript and provide a lighter subset to formerly monolithic [lodash](https://lodash.com/). ES6 brought most of those features and lodash has been split into ES6-module to imports seperately. for further reading on functional javascript, head over to [Javascript Alongé](https://leanpub.com/javascriptallongesix).
 
 usage
 -----
