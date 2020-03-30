@@ -5,10 +5,10 @@
   "main": "src/funcr.js",
   "directories": {
     "src": "src",
-    "built": "built"
+    "dist": "dist"
   },
   "scripts": {
-    "gzip": "find ./built -type f -name '*.js' -exec sh -c 'gzip -c {} > {}.gz' \\;"
+    "gzip": "find ./dist -type f -name '*.js' -exec sh -c 'gzip -c {} > {}.gz' \\;"
   },
   "keywords": [
     "functional",

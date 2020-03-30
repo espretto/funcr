@@ -15,7 +15,7 @@ module.exports = function(grunt) {
           baseUrl: 'src/',
           name: 'funcr',
           // optimize: 'none',
-          out: 'built/funcr.amd-<%=pkg.version%>.js',
+          out: 'dist/funcr.amd-<%=pkg.version%>.js',
         }
       },
       standalone: {
@@ -31,7 +31,7 @@ module.exports = function(grunt) {
             startFile: 'src/frag/almond.wrap.js',
             endFile: 'src/frag/almond.up.js'
           },
-          out: 'built/funcr.almond-<%=pkg.version%>.js'
+          out: 'dist/funcr.almond-<%=pkg.version%>.js'
         }
       }
     },
@@ -43,7 +43,7 @@ module.exports = function(grunt) {
         output: {
           libraryTarget: "umd",
           library: 'funcr',
-          path: 'built/',
+          path: 'dist/',
           filename: "funcr.webpack-<%=pkg.version%>.js"
         },
         plugins: [

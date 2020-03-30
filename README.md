@@ -21,7 +21,7 @@ grunt webpack:standalone
 
 # convenience
 npm run gzip
-ls -la ./built
+ls -la ./dist
 ```
 
 minified build            | size
