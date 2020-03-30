@@ -11,18 +11,8 @@ _CommonJS_ environments. assignments to the global `exports` object or per-modul
 globals are not supported. however, the standalone builds do have an _UMD_-wrapper.
 ```
 npm install
-
-# unwrapped rjs-build
-grunt requirejs:extension
-
-# umd-wrapped standalone with almond
-grunt requirejs:standalone
-
-# umd-wrapped standalone with webpack
-grunt webpack:standalone
-
-# convenience
-npm run gzip
+npx grunt
+npm run gzip # for *nix systems
 ls -la ./dist
 ```
 
