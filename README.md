@@ -22,8 +22,6 @@ funcr.amd-0.7.0.js        | 4.4kb
 funcr.amd-0.7.0.js.gz     | 1.5kb
 funcr.almond-0.7.0.js     | 7.6kb
 funcr.almond-0.7.0.js.gz  | 2.9kb
-funcr.webpack-0.7.0.js    | 5.3kb
-funcr.webpack-0.7.0.js.gz | 1.5kb
 
 __note:__ the _amdefine_-headers are stripped by each build using either anonymous
 build-pragmas (requirejs) or dead/unreachable code removal (webpack).

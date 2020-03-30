@@ -1,5 +1,10 @@
 
 var webpack = require('webpack')
+var path = require('path')
+
+function toAbsolute(rel) {
+  return path.join(__dirname, rel)
+}
 
 module.exports = function(grunt) {
 
@@ -34,36 +39,13 @@ module.exports = function(grunt) {
           out: 'dist/funcr.almond-<%=pkg.version%>.js'
         }
       }
-    },
-
-    webpack: {
-      standalone: {
-        context: './src',
-        entry: './funcr',
-        output: {
-          libraryTarget: "umd",
-          library: 'funcr',
-          path: 'dist/',
-          filename: "funcr.webpack-<%=pkg.version%>.js"
-        },
-        plugins: [
-          new webpack.optimize.UglifyJsPlugin({
-            mangle: true,
-            compress: {
-              warnings: false,
-            }
-          })
-        ]
-      }
     }
   })
 
   grunt.loadNpmTasks('grunt-requirejs')
-  grunt.loadNpmTasks("grunt-webpack");
 
   grunt.registerTask('default', [
     'requirejs:extension',
-    'requirejs:standalone',
-    'webpack:standalone'
+    'requirejs:standalone'
   ])
 }
