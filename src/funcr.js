@@ -4,7 +4,6 @@ if (typeof define !== 'function') { var define = require('amdefine')(module) }
 
 /*!
  * funcr released under MIT licence
- * http://mariusrunge.com/mit-licence.html
  */
 define([
   './funcr/ns',
